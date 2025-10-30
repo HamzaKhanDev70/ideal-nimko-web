@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app';
 
 const getApiPath = (path) => path;
 
