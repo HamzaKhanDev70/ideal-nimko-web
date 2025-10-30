@@ -1,135 +1,137 @@
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app';
+const RAW_BASE = (import.meta.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app').replace(/\/$/, '');
+export const API_BASE_URL = RAW_BASE;
+const API_PREFIX = /\/api$/i.test(RAW_BASE) ? '' : '/api';
 
-const getApiPath = (path) => path;
+const withApi = (path) => `${API_BASE_URL}${API_PREFIX}${path}`;
 
 export const api = {
   // Products
   products: {
-    getAll: () => `${API_BASE_URL}/api/products`,
-    getById: (id) => `${API_BASE_URL}/api/products/${id}`,
-    create: () => `${API_BASE_URL}/api/products`,
-    update: (id) => `${API_BASE_URL}/api/products/${id}`,
-    updateStock: (id) => `${API_BASE_URL}/api/products/${id}/stock`,
-    delete: (id) => `${API_BASE_URL}/api/products/${id}`,
-    uploadImages: () => `${API_BASE_URL}/api/products/upload-images`,
-    uploadImage: () => `${API_BASE_URL}/api/products/upload-image`,
-    categories: () => `${API_BASE_URL}/api/products/categories/list`
+    getAll: () => withApi('/products'),
+    getById: (id) => withApi(`/products/${id}`),
+    create: () => withApi('/products'),
+    update: (id) => withApi(`/products/${id}`),
+    updateStock: (id) => withApi(`/products/${id}/stock`),
+    delete: (id) => withApi(`/products/${id}`),
+    uploadImages: () => withApi('/products/upload-images'),
+    uploadImage: () => withApi('/products/upload-image'),
+    categories: () => withApi('/products/categories/list')
   },
 
   // Orders
   orders: {
-    getAll: () => `${API_BASE_URL}/api/orders`,
-    getById: (id) => `${API_BASE_URL}/api/orders/${id}`,
-    create: () => `${API_BASE_URL}/api/orders`,
-    update: (id) => `${API_BASE_URL}/api/orders/${id}`,
-    updateStatus: (id) => `${API_BASE_URL}/api/orders/${id}/status`,
-    delete: (id) => `${API_BASE_URL}/api/orders/${id}`,
-    stats: () => `${API_BASE_URL}/api/orders/stats/dashboard`
+    getAll: () => withApi('/orders'),
+    getById: (id) => withApi(`/orders/${id}`),
+    create: () => withApi('/orders'),
+    update: (id) => withApi(`/orders/${id}`),
+    updateStatus: (id) => withApi(`/orders/${id}/status`),
+    delete: (id) => withApi(`/orders/${id}`),
+    stats: () => withApi('/orders/stats/dashboard')
   },
 
   // Shopkeeper Orders
   shopkeeperOrders: {
-    getAll: () => `${API_BASE_URL}/api/shopkeeper-orders`,
-    getById: (id) => `${API_BASE_URL}/api/shopkeeper-orders/${id}`,
-    create: () => `${API_BASE_URL}/api/shopkeeper-orders`,
-    updateStatus: (id) => `${API_BASE_URL}/api/shopkeeper-orders/${id}/status`,
-    updatePayment: (id) => `${API_BASE_URL}/api/shopkeeper-orders/${id}/payment`,
-    stats: () => `${API_BASE_URL}/api/shopkeeper-orders/stats/dashboard`
+    getAll: () => withApi('/shopkeeper-orders'),
+    getById: (id) => withApi(`/shopkeeper-orders/${id}`),
+    create: () => withApi('/shopkeeper-orders'),
+    updateStatus: (id) => withApi(`/shopkeeper-orders/${id}/status`),
+    updatePayment: (id) => withApi(`/shopkeeper-orders/${id}/payment`),
+    stats: () => withApi('/shopkeeper-orders/stats/dashboard')
   },
 
   // Shopkeepers
   shopkeepers: {
-    getAll: () => `${API_BASE_URL}/api/shopkeepers`
+    getAll: () => withApi('/shopkeepers')
   },
 
   // Users
   users: {
-    getAll: () => `${API_BASE_URL}/api/users`,
-    getById: (id) => `${API_BASE_URL}/api/users/${id}`,
-    create: () => `${API_BASE_URL}/api/users`,
-    update: (id) => `${API_BASE_URL}/api/users/${id}`,
-    delete: (id) => `${API_BASE_URL}/api/users/${id}`,
-    profile: () => `${API_BASE_URL}/api/users/profile`,
-    login: () => `${API_BASE_URL}/api/users/login`
+    getAll: () => withApi('/users'),
+    getById: (id) => withApi(`/users/${id}`),
+    create: () => withApi('/users'),
+    update: (id) => withApi(`/users/${id}`),
+    delete: (id) => withApi(`/users/${id}`),
+    profile: () => withApi('/users/profile'),
+    login: () => withApi('/users/login')
   },
 
   // Admin
   admin: {
-    login: () => `${API_BASE_URL}${getApiPath('/api/admin/login')}`,
-    profile: () => `${API_BASE_URL}${getApiPath('/api/admin/profile')}`
+    login: () => withApi('/admin/login'),
+    profile: () => withApi('/admin/profile')
   },
 
   // Distribution
   distribution: {
-    getAll: () => `${API_BASE_URL}/api/distribution`,
-    create: () => `${API_BASE_URL}/api/distribution`,
-    updateStatus: (id) => `${API_BASE_URL}/api/distribution/${id}/status`
+    getAll: () => withApi('/distribution'),
+    create: () => withApi('/distribution'),
+    updateStatus: (id) => withApi(`/distribution/${id}/status`)
   },
 
   // Sales
   sales: {
-    getAll: () => `${API_BASE_URL}/api/sales`,
-    create: () => `${API_BASE_URL}/api/sales`,
-    stats: () => `${API_BASE_URL}/api/sales/stats/dashboard`
+    getAll: () => withApi('/sales'),
+    create: () => withApi('/sales'),
+    stats: () => withApi('/sales/stats/dashboard')
   },
 
   // Assignments
   assignments: {
-    getAll: () => `${API_BASE_URL}${getApiPath('/api/assignments')}`,
-    getBySalesman: (salesmanId) => `${API_BASE_URL}${getApiPath(`/api/assignments/salesman/${salesmanId}`)}`,
-    getShopkeepersBySalesman: (salesmanId) => `${API_BASE_URL}${getApiPath(`/api/assignments/salesman/${salesmanId}/shopkeepers`)}`,
-    create: () => `${API_BASE_URL}${getApiPath('/api/assignments')}`,
-    update: (id) => `${API_BASE_URL}${getApiPath(`/api/assignments/${id}`)}`,
-    delete: (id) => `${API_BASE_URL}${getApiPath(`/api/assignments/${id}`)}`,
-    getAvailableSalesmen: () => `${API_BASE_URL}${getApiPath('/api/assignments/available/salesmen')}`,
-    getAvailableShopkeepers: () => `${API_BASE_URL}${getApiPath('/api/assignments/available/shopkeepers')}`
+    getAll: () => withApi('/assignments'),
+    getBySalesman: (salesmanId) => withApi(`/assignments/salesman/${salesmanId}`),
+    getShopkeepersBySalesman: (salesmanId) => withApi(`/assignments/salesman/${salesmanId}/shopkeepers`),
+    create: () => withApi('/assignments'),
+    update: (id) => withApi(`/assignments/${id}`),
+    delete: (id) => withApi(`/assignments/${id}`),
+    getAvailableSalesmen: () => withApi('/assignments/available/salesmen'),
+    getAvailableShopkeepers: () => withApi('/assignments/available/shopkeepers')
   },
 
   // Categories
   categories: {
-    getAll: () => `${API_BASE_URL}${getApiPath('/api/categories')}`,
-    getAllForAdmin: () => `${API_BASE_URL}${getApiPath('/api/categories/all')}`,
-    create: () => `${API_BASE_URL}${getApiPath('/api/categories')}`,
-    update: (id) => `${API_BASE_URL}${getApiPath(`/api/categories/${id}`)}`,
-    delete: (id) => `${API_BASE_URL}${getApiPath(`/api/categories/${id}`)}`,
-    toggle: (id) => `${API_BASE_URL}${getApiPath(`/api/categories/${id}/toggle`)}`,
-    reorder: () => `${API_BASE_URL}${getApiPath('/api/categories/reorder')}`
+    getAll: () => withApi('/categories'),
+    getAllForAdmin: () => withApi('/categories/all'),
+    create: () => withApi('/categories'),
+    update: (id) => withApi(`/categories/${id}`),
+    delete: (id) => withApi(`/categories/${id}`),
+    toggle: (id) => withApi(`/categories/${id}/toggle`),
+    reorder: () => withApi('/categories/reorder')
   },
 
   // Recoveries
   recoveries: {
-    getAll: () => `${API_BASE_URL}${getApiPath('/api/recoveries')}`,
-    getById: (id) => `${API_BASE_URL}${getApiPath(`/api/recoveries/${id}`)}`,
-    create: () => `${API_BASE_URL}${getApiPath('/api/recoveries')}`,
-    update: (id) => `${API_BASE_URL}${getApiPath(`/api/recoveries/${id}`)}`,
-    delete: (id) => `${API_BASE_URL}${getApiPath(`/api/recoveries/${id}`)}`,
-    getStats: () => `${API_BASE_URL}${getApiPath('/api/recoveries/stats/summary')}`,
-    getShopkeepers: (salesmanId) => `${API_BASE_URL}${getApiPath(`/api/recoveries/shopkeepers/${salesmanId}`)}`
+    getAll: () => withApi('/recoveries'),
+    getById: (id) => withApi(`/recoveries/${id}`),
+    create: () => withApi('/recoveries'),
+    update: (id) => withApi(`/recoveries/${id}`),
+    delete: (id) => withApi(`/recoveries/${id}`),
+    getStats: () => withApi('/recoveries/stats/summary'),
+    getShopkeepers: (salesmanId) => withApi(`/recoveries/shopkeepers/${salesmanId}`)
   },
 
   // Receipts
   receipts: {
-    getAll: () => `${API_BASE_URL}/api/receipts`,
-    getById: (id) => `${API_BASE_URL}/api/receipts/${id}`,
-    create: () => `${API_BASE_URL}/api/receipts`,
-    updateStatus: (id) => `${API_BASE_URL}/api/receipts/${id}/status`,
-    getStats: () => `${API_BASE_URL}/api/receipts/stats/summary`
+    getAll: () => withApi('/receipts'),
+    getById: (id) => withApi(`/receipts/${id}`),
+    create: () => withApi('/receipts'),
+    updateStatus: (id) => withApi(`/receipts/${id}/status`),
+    getStats: () => withApi('/receipts/stats/summary')
   },
 
   // Analytics
   analytics: {
-    getDashboard: () => `${API_BASE_URL}${getApiPath('/api/analytics/dashboard')}`,
-    getSalesmanAnalytics: (salesmanId) => `${API_BASE_URL}${getApiPath(`/api/analytics/salesman/${salesmanId}`)}`
+    getDashboard: () => withApi('/analytics/dashboard'),
+    getSalesmanAnalytics: (salesmanId) => withApi(`/analytics/salesman/${salesmanId}`)
   },
 
   // Notifications
   notifications: {
-    getAll: () => `${API_BASE_URL}/api/notifications`,
-    getById: (id) => `${API_BASE_URL}/api/notifications/${id}`,
-    markAsRead: (id) => `${API_BASE_URL}/api/notifications/${id}/read`,
-    markAllAsRead: () => `${API_BASE_URL}/api/notifications/read-all`,
-    create: () => `${API_BASE_URL}/api/notifications`,
-    delete: (id) => `${API_BASE_URL}/api/notifications/${id}`
+    getAll: () => withApi('/notifications'),
+    getById: (id) => withApi(`/notifications/${id}`),
+    markAsRead: (id) => withApi(`/notifications/${id}/read`),
+    markAllAsRead: () => withApi('/notifications/read-all'),
+    create: () => withApi('/notifications'),
+    delete: (id) => withApi(`/notifications/${id}`)
   }
 };
