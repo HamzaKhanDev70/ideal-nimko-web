@@ -1,52 +1,20 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/.netlify/functions' : 'http://localhost:5000');
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api';
 
-// Helper function to get the correct API path
-const getApiPath = (path) => {
-  if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
-    // In production with Netlify functions, remove /api prefix and use function names
-    const cleanPath = path.replace('/api/', '');
-    if (cleanPath.startsWith('admin/')) {
-      return '/admin';
-    }
-    if (cleanPath.startsWith('products')) {
-      return '/products';
-    }
-    if (cleanPath.startsWith('orders')) {
-      return '/orders';
-    }
-    if (cleanPath.startsWith('users')) {
-      return '/users';
-    }
-    if (cleanPath.startsWith('categories')) {
-      return '/categories';
-    }
-    if (cleanPath.startsWith('assignments')) {
-      return '/assignments';
-    }
-    if (cleanPath.startsWith('analytics')) {
-      return '/analytics';
-    }
-    if (cleanPath.startsWith('recoveries')) {
-      return '/recoveries';
-    }
-    return cleanPath;
-  }
-  return path;
-};
+const getApiPath = (path) => path;
 
 export const api = {
   // Products
   products: {
-    getAll: () => `${API_BASE_URL}${getApiPath('/api/products')}`,
-    getById: (id) => `${API_BASE_URL}${getApiPath(`/api/products/${id}`)}`,
-    create: () => `${API_BASE_URL}${getApiPath('/api/products')}`,
-    update: (id) => `${API_BASE_URL}${getApiPath(`/api/products/${id}`)}`,
-    updateStock: (id) => `${API_BASE_URL}${getApiPath(`/api/products/${id}/stock`)}`,
-    delete: (id) => `${API_BASE_URL}${getApiPath(`/api/products/${id}`)}`,
-    uploadImages: () => `${API_BASE_URL}${getApiPath('/api/products/upload-images')}`,
-    uploadImage: () => `${API_BASE_URL}${getApiPath('/api/products/upload-image')}`,
-    categories: () => `${API_BASE_URL}${getApiPath('/api/products/categories/list')}`
+    getAll: () => `${API_BASE_URL}/api/products`,
+    getById: (id) => `${API_BASE_URL}/api/products/${id}`,
+    create: () => `${API_BASE_URL}/api/products`,
+    update: (id) => `${API_BASE_URL}/api/products/${id}`,
+    updateStock: (id) => `${API_BASE_URL}/api/products/${id}/stock`,
+    delete: (id) => `${API_BASE_URL}/api/products/${id}`,
+    uploadImages: () => `${API_BASE_URL}/api/products/upload-images`,
+    uploadImage: () => `${API_BASE_URL}/api/products/upload-image`,
+    categories: () => `${API_BASE_URL}/api/products/categories/list`
   },
 
   // Orders
@@ -165,5 +133,3 @@ export const api = {
     delete: (id) => `${API_BASE_URL}/api/notifications/${id}`
   }
 };
-
-export default API_BASE_URL;

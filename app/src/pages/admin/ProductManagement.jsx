@@ -74,14 +74,14 @@ export default function ProductManagement() {
     
     // If no imageURL but we have uploaded images, use the first uploaded image as main image
     if (!submitData.imageURL && submitData.additionalImages.length > 0) {
-      submitData.imageURL = `http://localhost:5000${submitData.additionalImages[0]}`;
+      submitData.imageURL = `${process.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api'}${submitData.additionalImages[0]}`;
     }
     
     try {
       if (editingProduct) {
-        await axios.put(`http://localhost:5000/api/products/${editingProduct._id}`, submitData);
+        await axios.put(api.products.update(editingProduct._id), submitData);
       } else {
-        await axios.post('http://localhost:5000/api/products', submitData);
+        await axios.post(api.products.create(), submitData);
       }
       setShowModal(false);
       setEditingProduct(null);
@@ -111,7 +111,7 @@ export default function ProductManagement() {
   const handleDelete = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/products/${productId}`);
+        await axios.delete(`${process.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api'}/api/products/${productId}`);
         fetchProducts();
       } catch (error) {
         console.error('Error deleting product:', error);
@@ -162,7 +162,7 @@ export default function ProductManagement() {
         formData.append('images', file);
       });
 
-      const response = await axios.post('http://localhost:5000/api/products/upload-images', formData, {
+      const response = await axios.post(`${process.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api'}/api/products/upload-images`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -320,7 +320,7 @@ export default function ProductManagement() {
                       {product.additionalImages.slice(0, 3).map((imageUrl, index) => (
                         <img
                           key={index}
-                          src={`http://localhost:5000${imageUrl}`}
+                          src={`${process.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api'}${imageUrl}`}
                           alt={`${product.name} ${index + 1}`}
                           className="w-8 h-8 object-cover rounded"
                         />
@@ -570,7 +570,7 @@ export default function ProductManagement() {
                       {formData.additionalImages.map((imageUrl, index) => (
                         <div key={index} className="relative">
                           <img
-                            src={`http://localhost:5000${imageUrl}`}
+                            src={`${process.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api'}${imageUrl}`}
                             alt={`Product ${index + 1}`}
                             className="w-full h-20 object-cover rounded"
                           />
