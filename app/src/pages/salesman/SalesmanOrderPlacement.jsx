@@ -5,6 +5,7 @@ import { api } from '../../utils/api';
 export default function SalesmanOrderPlacement() {
   const [products, setProducts] = useState([]);
   const [shopkeepers, setShopkeepers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -54,19 +55,24 @@ export default function SalesmanOrderPlacement() {
         return;
       }
       
-      const [productsResponse, shopkeepersResponse] = await Promise.all([
+      const [productsResponse, shopkeepersResponse, categoriesResponse] = await Promise.all([
         axios.get(api.products.getAll()),
         axios.get(api.assignments.getShopkeepersBySalesman(userId), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
-        })
+        }),
+        axios.get(api.categories.getAll())
       ]);
-      
-      console.log('Shopkeepers response:', shopkeepersResponse.data.shopkeepers);
       
       setProducts(productsResponse.data.products || productsResponse.data || []);
       setShopkeepers(shopkeepersResponse.data.shopkeepers || []);
+      // categories endpoint returns { success, categories: [ { name, ... } ] } or array
+      const rawCategories = categoriesResponse?.data?.categories || categoriesResponse?.data || [];
+      const normalizedCategories = Array.isArray(rawCategories)
+        ? rawCategories.map(c => (typeof c === 'string' ? c : c?.name)).filter(Boolean)
+        : [];
+      setCategories(normalizedCategories);
     } catch (error) {
       console.error('Error fetching data:', error);
       
@@ -77,6 +83,18 @@ export default function SalesmanOrderPlacement() {
         console.log('Products loaded successfully');
       } catch (productError) {
         console.error('Error loading products:', productError);
+      }
+      // Try to fetch categories even if others fail
+      try {
+        const categoriesResponse = await axios.get(api.categories.getAll());
+        const rawCategories = categoriesResponse?.data?.categories || categoriesResponse?.data || [];
+        const normalizedCategories = Array.isArray(rawCategories)
+          ? rawCategories.map(c => (typeof c === 'string' ? c : c?.name)).filter(Boolean)
+          : [];
+        setCategories(normalizedCategories);
+        console.log('Categories loaded successfully');
+      } catch (categoriesError) {
+        console.error('Error loading categories:', categoriesError);
       }
       
       // If assignment API fails, try to fetch all shopkeepers as fallback
@@ -315,7 +333,7 @@ export default function SalesmanOrderPlacement() {
     return matchesSearch && matchesCategory && product.stock > 0;
   });
 
-  const categories = [...new Set(products.map(product => product.category))];
+  // categories now comes from API via state
 
   const printReceipt = async () => {
     const printWindow = window.open('', '_blank');
@@ -642,8 +660,8 @@ Ideal Nimko Ltd.`;
               >
                 <option value="">Choose a shopkeeper...</option>
                 {shopkeepers.map(shopkeeper => (
-                  <option key={shopkeeper._id} value={shopkeeper._id}>
-                    {shopkeeper.name} - {shopkeeper.email}
+                  <option key={shopkeeper._id} value={shopkeeper._id} className='text-sm'>
+                    {shopkeeper.name}-{shopkeeper.email}
                   </option>
                 ))}
               </select>
