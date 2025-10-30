@@ -1,0 +1,19 @@
+{
+  "name": "ideal-nimko-website",
+  "version": "1.0.0",
+  "description": "Full-stack e-commerce website for Ideal Nimko Ltd.",
+  "scripts": {
+    "install-all": "cd api && npm install && cd ../app && npm install",
+    "start-backend": "cd api && npm start",
+    "start-frontend": "cd app && npm run dev",
+    "seed-db": "cd api && node seedData.js",
+    "dev": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
+    "build": "cd app && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": ["e-commerce", "react", "nodejs", "mongodb", "snacks"],
+  "author": "Ideal Nimko Ltd.",
+  "license": "MIT"
+}

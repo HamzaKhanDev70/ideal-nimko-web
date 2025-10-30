@@ -1,0 +1,799 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { api } from '../../utils/api';
+
+export default function RecoveryManagement() {
+  const [recoveries, setRecoveries] = useState([]);
+  const [shopkeepers, setShopkeepers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [lastRecovery, setLastRecovery] = useState(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [formData, setFormData] = useState({
+    shopkeeperId: '',
+    recoveryType: 'payment_only',
+    amountCollected: '',
+    paymentMethod: 'cash',
+    items: [],
+    notes: '',
+    recoveryLocation: '',
+    bankDetails: {
+      bankName: '',
+      accountNumber: '',
+      transactionId: '',
+      chequeNumber: ''
+    }
+  });
+  const [newItem, setNewItem] = useState({
+    product: '',
+    quantity: "",
+    unitPrice: ""
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const userId = localStorage.getItem('userId');
+
+      const [recoveriesResponse, shopkeepersResponse, productsResponse] = await Promise.all([
+        axios.get(api.recoveries.getAll(), {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        axios.get(api.assignments.getShopkeepersBySalesman(userId), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }),
+        axios.get(api.products.getAll())
+      ]);
+      console.log('Shopkeepers response:', shopkeepersResponse.data.shopkeepers);
+      setRecoveries(recoveriesResponse.data.recoveries || []);
+      setShopkeepers(shopkeepersResponse.data.shopkeepers || []);
+      setProducts(productsResponse.data.products || productsResponse.data || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      alert('Error loading data: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get(api.recoveries.getStats(), {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setStats(response.data);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.post(api.recoveries.create(), formData, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      alert('Recovery recorded successfully!');
+      setLastRecovery(response.data.recovery);
+      setShowForm(false);
+      setShowReceipt(true);
+      setFormData({
+        shopkeeperId: '',
+        recoveryType: 'payment_only',
+        amountCollected: '',
+        paymentMethod: 'cash',
+        items: [],
+        notes: '',
+        recoveryLocation: '',
+        bankDetails: {
+          bankName: '',
+          accountNumber: '',
+          transactionId: '',
+          chequeNumber: ''
+        }
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error creating recovery:', error);
+      alert('Error creating recovery: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const addItem = () => {
+    if (!newItem.product || newItem.quantity <= 0 || newItem.unitPrice < 0) {
+      alert('Please fill all item fields correctly');
+      return;
+    }
+
+    const product = products.find(p => p._id === newItem.product);
+    if (!product) {
+      alert('Product not found');
+      return;
+    }
+
+    if (product.stock < newItem.quantity) {
+      alert(`Insufficient stock. Available: ${product.stock}`);
+      return;
+    }
+
+    const item = {
+      product: newItem.product,
+      quantity: newItem.quantity,
+      unitPrice: newItem.unitPrice,
+      totalPrice: newItem.quantity * newItem.unitPrice
+    };
+
+    setFormData({
+      ...formData,
+      items: [...formData.items, item]
+    });
+
+    setNewItem({
+      product: '',
+      quantity: 1,
+      unitPrice: 0
+    });
+  };
+
+  const removeItem = (index) => {
+    setFormData({
+      ...formData,
+      items: formData.items.filter((_, i) => i !== index)
+    });
+  };
+
+  const calculateTotals = () => {
+    const itemsValue = formData.items.reduce((total, item) => total + item.totalPrice, 0);
+    const netPayment = parseFloat(formData.amountCollected || 0) - itemsValue;
+    return { itemsValue, netPayment };
+  };
+
+  const printRecoveryReceipt = async () => {
+    if (!lastRecovery) return;
+    
+    const printWindow = window.open('', '_blank');
+    const receiptContent = document.getElementById('recovery-receipt-content').innerHTML;
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Recovery Receipt - ${lastRecovery.shopkeeper?.name || 'Shopkeeper'}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; }
+            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+            .header h1 { margin: 0; font-size: 24px; color: #333; }
+            .header p { margin: 5px 0 0 0; font-size: 16px; color: #666; }
+            .order-info { margin-bottom: 20px; }
+            .order-info p { margin: 5px 0; }
+            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .items-table th { background-color: #f2f2f2; }
+            .total { font-weight: bold; background-color: #f9f9f9; }
+            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+              .header { page-break-inside: avoid; }
+              .items-table { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Ideal Nimko Ltd.</h1>
+            <p>Recovery Receipt</p>
+            <div class="shop-name">For: ${lastRecovery.shopkeeper?.name || 'Shopkeeper'}</div>
+          </div>
+          ${receiptContent}
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.print();
+    
+    // Record the receipt for admin tracking
+    try {
+      const token = localStorage.getItem('adminToken');
+      await axios.post(api.receipts.create(), {
+        receiptType: 'recovery',
+        recoveryId: lastRecovery._id,
+        receiptContent: receiptContent,
+        totalAmount: lastRecovery.amountCollected,
+        notes: 'Recovery receipt printed by salesman'
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error('Error recording receipt:', error);
+      // Don't show error to user as printing was successful
+    }
+  };
+
+  const getSelectedShopkeeper = () => {
+    return shopkeepers.find(s => s._id === formData.shopkeeperId);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading recovery data...</div>
+      </div>
+    );
+  }
+
+  const { itemsValue, netPayment } = calculateTotals();
+  const selectedShopkeeper = getSelectedShopkeeper();
+
+  return (
+    <div className="p-3 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Recovery Management</h1>
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+          <button
+            onClick={() => {
+              setShowStats(true);
+              fetchStats();
+            }}
+            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm sm:text-base"
+          >
+            📊 Statistics
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
+          >
+            ➕ Record Recovery
+          </button>
+        </div>
+      </div>
+
+      {/* Recovery Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg p-3 sm:p-6 w-full max-w-4xl max-h-[95vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold">Record Recovery</h2>
+              <button
+                onClick={() => setShowForm(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Shopkeeper *
+                  </label>
+                  <select
+                    value={formData.shopkeeperId}
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      const selectedShopkeeper = shopkeepers.find(s => s._id === selectedId);
+                      setFormData({
+                        ...formData, 
+                        shopkeeperId: selectedId,
+                        recoveryLocation: selectedShopkeeper?.address || ''
+                      });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select Shopkeeper</option>
+                    {shopkeepers.map(shopkeeper => (
+                      <option key={shopkeeper._id} value={shopkeeper._id}>
+                        {shopkeeper.name} - Pending: PKR {shopkeeper.pendingAmount?.toFixed(2) || '0.00'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Recovery Type *
+                  </label>
+                  <select
+                    value={formData.recoveryType}
+                    onChange={(e) => setFormData({...formData, recoveryType: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="payment_only">Payment Only</option>
+                    <option value="payment_with_items">Payment with Items</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Amount Collected (PKR) *
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.amountCollected}
+                    onChange={(e) => setFormData({...formData, amountCollected: e.target.value})}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Method *
+                  </label>
+                  <select
+                    value={formData.paymentMethod}
+                    onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="upi">UPI</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Items Section */}
+              {formData.recoveryType === 'payment_with_items' && (
+                <div className="border rounded-lg p-3 sm:p-4">
+                  <h3 className="text-base sm:text-lg font-medium mb-3">📦 Items Delivered</h3>
+                  
+                  {/* Add Item Form */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
+                      <select
+                        value={newItem.product}
+                        onChange={(e) => {
+                          const product = products.find(p => p._id === e.target.value);
+                          setNewItem({
+                            ...newItem,
+                            product: e.target.value,
+                            unitPrice: product?.price || 0
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select Product</option>
+                        {products.map(product => (
+                          <option key={product._id} value={product._id}>
+                            {product.name} (Stock: {product.stock})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                      <input
+                        type="number"
+                        value={newItem.quantity}
+                        onChange={(e) => setNewItem({...newItem, quantity: parseInt(e.target.value) || 1})}
+                        min="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price</label>
+                      <input
+                        type="number"
+                        value={newItem.unitPrice}
+                        onChange={(e) => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})}
+                        min="0"
+                        step="1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex items-end sm:col-span-2 lg:col-span-1">
+                      <button
+                        type="button"
+                        onClick={addItem}
+                        className="w-full bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm"
+                      >
+                        ➕ Add Item
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Items List */}
+                  {formData.items.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm sm:text-base">Added Items:</h4>
+                      {formData.items.map((item, index) => {
+                        const product = products.find(p => p._id === item.product);
+                        return (
+                          <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-2 sm:p-3 rounded space-y-2 sm:space-y-0">
+                            <div className="flex-1">
+                              <div className="font-medium text-sm sm:text-base">{product?.name}</div>
+                              <div className="text-gray-500 text-xs sm:text-sm">
+                                {item.quantity} × PKR {item.unitPrice} = PKR {item.totalPrice}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeItem(index)}
+                              className="text-red-600 hover:text-red-800 text-sm px-2 py-1 bg-red-50 rounded"
+                            >
+                              🗑️ Remove
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Additional Information */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Shop Address
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.recoveryLocation}
+                    onChange={(e) => setFormData({...formData, recoveryLocation: e.target.value})}
+                    placeholder="Auto-filled from selected shopkeeper"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Notes
+                </label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Summary */}
+              {selectedShopkeeper && (
+                <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium mb-2 text-sm sm:text-base">💰 Recovery Summary</h4>
+                  <div className="space-y-1 text-xs sm:text-sm">
+                    <div className="flex justify-between">
+                      <span>Previous Pending:</span>
+                      <span className="font-medium">PKR. {selectedShopkeeper.pendingAmount?.toFixed(2) || '0.00'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Amount Collected:</span>
+                      <span className="font-medium">PKR. {formData.amountCollected || '0.00'}</span>
+                    </div>
+                    {formData.recoveryType === 'payment_with_items' && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>Items Value:</span>
+                          <span className="font-medium">PKR. {itemsValue.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Net Payment:</span>
+                          <span className="font-medium">PKR. {netPayment.toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between border-t pt-1">
+                      <span className="font-medium">New Pending:</span>
+                      <span className="font-bold text-blue-600">PKR. {Math.max(0, (selectedShopkeeper.pendingAmount || 0) - netPayment).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 text-sm sm:text-base font-medium"
+                >
+                  {submitting ? '⏳ Recording...' : '💾 Record Recovery'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="flex-1 bg-gray-500 text-white px-4 py-3 rounded-lg hover:bg-gray-600 transition-colors text-sm sm:text-base font-medium"
+                >
+                  ❌ Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Statistics Modal */}
+      {showStats && stats && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold">📊 Recovery Statistics</h2>
+              <button
+                onClick={() => setShowStats(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold text-blue-600">PKR {stats.stats.totalAmountCollected?.toFixed(2) || '0.00'}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Total Collected</div>
+              </div>
+              <div className="bg-green-50 p-3 sm:p-4 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold text-green-600">PKR {stats.stats.totalNetPayment?.toFixed(2) || '0.00'}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Net Payment</div>
+              </div>
+              <div className="bg-purple-50 p-3 sm:p-4 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold text-purple-600">{stats.stats.totalRecoveries || 0}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Total Recoveries</div>
+              </div>
+              <div className="bg-orange-50 p-3 sm:p-4 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold text-orange-600">PKR {stats.stats.averageRecovery?.toFixed(2) || '0.00'}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Average Recovery</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recoveries List */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+          <h3 className="text-base sm:text-lg font-medium">📋 Recent Recoveries</h3>
+        </div>
+        
+        {recoveries.length === 0 ? (
+          <div className="text-center py-6 sm:py-8 text-gray-500 text-sm sm:text-base">
+            No recoveries found. Record your first recovery above.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            {/* Mobile Card View */}
+            <div className="block sm:hidden">
+              {recoveries.map((recovery) => (
+                <div key={recovery._id} className="border-b border-gray-200 p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm text-gray-900">{recovery.shopkeeper?.name}</div>
+                      <div className="text-xs text-gray-500">{new Date(recovery.recoveryDate).toLocaleDateString()}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-sm text-gray-900">PKR {recovery.amountCollected?.toFixed(2)}</div>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        recovery.status === 'completed' 
+                          ? 'bg-green-100 text-green-800' 
+                          : recovery.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {recovery.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-gray-500">
+                    <span className={`inline-flex px-2 py-1 rounded-full ${
+                      recovery.recoveryType === 'payment_only' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {recovery.recoveryType === 'payment_only' ? '💰 Payment Only' : '📦 With Items'}
+                    </span>
+                    <span>{recovery.paymentMethod}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Shopkeeper
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payment Method
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {recoveries.map((recovery) => (
+                    <tr key={recovery._id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(recovery.recoveryDate).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{recovery.shopkeeper?.name}</div>
+                        <div className="text-sm text-gray-500">{recovery.shopkeeper?.email}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          recovery.recoveryType === 'payment_only' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {recovery.recoveryType === 'payment_only' ? 'Payment Only' : 'With Items'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        PKR {recovery.amountCollected?.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {recovery.paymentMethod}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          recovery.status === 'completed' 
+                            ? 'bg-green-100 text-green-800' 
+                            : recovery.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {recovery.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Recovery Receipt Modal */}
+      {showReceipt && lastRecovery && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg p-3 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold">💰 Recovery Receipt</h2>
+              <button
+                onClick={() => setShowReceipt(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div id="recovery-receipt-content">
+              <div className="header">
+                <h1 className="text-xl sm:text-2xl font-bold">Ideal Nimko Ltd.</h1>
+                <p>Recovery Receipt</p>
+              </div>
+              
+              <div className="order-info">
+                <p><strong>Recovery ID:</strong> {lastRecovery._id}</p>
+                <p><strong>Recovery Date:</strong> {new Date(lastRecovery.recoveryDate).toLocaleString()}</p>
+                <p><strong>Shopkeeper:</strong> {lastRecovery.shopkeeper?.name}</p>
+                <p><strong>Salesman:</strong> {lastRecovery.salesman?.name}</p>
+                <p><strong>Recovery Type:</strong> {lastRecovery.recoveryType === 'payment_only' ? 'Payment Only' : 'Payment with Items'}</p>
+                <p><strong>Payment Method:</strong> {lastRecovery.paymentMethod}</p>
+                {lastRecovery.recoveryLocation && <p><strong>Location:</strong> {lastRecovery.recoveryLocation}</p>}
+                {lastRecovery.receiptNumber && <p><strong>Receipt Number:</strong> {lastRecovery.receiptNumber}</p>}
+                {lastRecovery.notes && <p><strong>Notes:</strong> {lastRecovery.notes}</p>}
+              </div>
+
+              {lastRecovery.recoveryType === 'payment_with_items' && lastRecovery.items && lastRecovery.items.length > 0 && (
+                <table className="items-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Quantity</th>
+                      <th>Unit Price</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lastRecovery.items.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.product?.name || 'Product'}</td>
+                        <td>{item.quantity}</td>
+                        <td>PKR {item.unitPrice?.toFixed(2) || '0.00'}</td>
+                        <td>PKR {item.totalPrice?.toFixed(2) || '0.00'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan="3">Items Total:</td>
+                      <td>PKR {lastRecovery.itemsValue?.toFixed(2) || '0.00'}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              )}
+
+              <table className="items-table">
+                <tbody>
+                  <tr>
+                    <td><strong>Amount Collected:</strong></td>
+                    <td><strong>PKR {lastRecovery.amountCollected?.toFixed(2) || '0.00'}</strong></td>
+                  </tr>
+                  {lastRecovery.recoveryType === 'payment_with_items' && (
+                    <tr>
+                      <td>Items Value:</td>
+                      <td>PKR {lastRecovery.itemsValue?.toFixed(2) || '0.00'}</td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td>Previous Pending Amount:</td>
+                    <td>PKR {lastRecovery.previousPendingAmount?.toFixed(2) || '0.00'}</td>
+                  </tr>
+                  <tr className="total">
+                    <td><strong>Net Payment:</strong></td>
+                    <td><strong>PKR {lastRecovery.netPayment?.toFixed(2) || '0.00'}</strong></td>
+                  </tr>
+                  <tr className="total">
+                    <td><strong>New Pending Amount:</strong></td>
+                    <td><strong>PKR {lastRecovery.newPendingAmount?.toFixed(2) || '0.00'}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+              
+              <div className="footer">
+                <p>Thank you for your business!</p>
+                <p>Generated on: {new Date().toLocaleString()}</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
+              <button
+                onClick={() => setShowReceipt(false)}
+                className="flex-1 bg-gray-500 text-white px-4 py-3 rounded-lg hover:bg-gray-600 transition-colors text-sm sm:text-base font-medium"
+              >
+                ❌ Close
+              </button>
+              <button
+                onClick={printRecoveryReceipt}
+                className="flex-1 bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base font-medium"
+              >
+                🖨️ Print Receipt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
