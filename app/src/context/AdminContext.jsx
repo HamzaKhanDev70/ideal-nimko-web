@@ -3,6 +3,9 @@ import axios from 'axios';
 
 const AdminContext = createContext();
 
+// Central API base URL for both local and production
+const API_BASE = (import.meta.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api');
+
 const adminReducer = (state, action) => {
   switch (action.type) {
     case 'LOGIN_START':
@@ -66,7 +69,7 @@ export const AdminProvider = ({ children }) => {
   const verifyToken = async () => {
     try {
       // Try new user system first
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/profile`);
+      const response = await axios.get(`${API_BASE}/users/profile`);
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: {
@@ -76,9 +79,9 @@ export const AdminProvider = ({ children }) => {
       });
     } catch (error) {
       console.log('Token verification failed:', error.message);
-      // Try old admin system as fallback
+      // Try old admin system as fallback (same API base, different path)
       try {
-        const response = await axios.get('http://localhost:5000/api/admin/profile');
+        const response = await axios.get(`${API_BASE}/admin/profile`);
         dispatch({
           type: 'LOGIN_SUCCESS',
           payload: {
@@ -101,7 +104,7 @@ export const AdminProvider = ({ children }) => {
     dispatch({ type: 'LOGIN_START' });
     try {
       // Try new user system first
-      const response = await axios.post('http://localhost:5000/api/users/login', { email, password });
+      const response = await axios.post(`${API_BASE}/users/login`, { email, password });
       const { token, ...userData } = response.data;
       
       localStorage.setItem('adminToken', token);
@@ -116,7 +119,7 @@ export const AdminProvider = ({ children }) => {
       console.log('New user system login failed, trying admin system...');
       try {
         // Fallback to old admin system
-        const response = await axios.post('http://localhost:5000/api/admin/login', { email, password });
+        const response = await axios.post(`${API_BASE}/admin/login`, { email, password });
         const { token, admin } = response.data;
         
         localStorage.setItem('adminToken', token);
@@ -170,6 +173,6 @@ export const useAdmin = () => {
   const context = useContext(AdminContext);
   if (!context) {
     throw new Error('useAdmin must be used within an AdminProvider');
-  }
+    }
   return context;
 };
