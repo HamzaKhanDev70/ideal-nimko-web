@@ -1,6 +1,10 @@
 // src/api/api.js
+// Set your API base URL for production (Railway) and local development
+// To change, simply set VITE_API_URL in your .env file at the project root
+
 import axios from "axios";
-const API_URL = "http://localhost:5000/api";
+
+const API_URL = import.meta.env.VITE_API_URL || "https://ideal-nimko-web-production-e088.up.railway.app/api";
 
 export const getProducts = async (params = {}) => {
   const response = await axios.get(`${API_URL}/products`, { params });

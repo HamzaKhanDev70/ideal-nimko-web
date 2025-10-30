@@ -9,22 +9,7 @@
       }
     }
   ],
-  "routes": [
-    {
-      "src": "/admin/(.*)",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/shopkeeper/(.*)",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/salesman/(.*)",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
