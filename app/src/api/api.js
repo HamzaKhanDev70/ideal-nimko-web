@@ -4,7 +4,7 @@
 
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://ideal-nimko-web-production-e088.up.railway.app/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export const getProducts = async (params = {}) => {
   const response = await axios.get(`${API_URL}/products`, { params });
