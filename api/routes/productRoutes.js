@@ -65,6 +65,7 @@ router.get("/:id", async (req, res) => {
 router.get("/categories/list", async (req, res) => {
   try {
     const categories = await Product.distinct("category");
+    console.log('Categories:-->', categories);
     res.json(categories);
   } catch (error) {
     res.status(500).json({ error: error.message });

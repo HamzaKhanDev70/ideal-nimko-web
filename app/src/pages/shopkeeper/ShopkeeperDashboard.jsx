@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { api } from '../../utils/api';
 
 export default function ShopkeeperDashboard() {
   const [products, setProducts] = useState([]);
@@ -21,7 +22,7 @@ export default function ShopkeeperDashboard() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/products');
+      const response = await axios.get(api.products.getAll());
       setProducts(response.data.products || response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -30,7 +31,7 @@ export default function ShopkeeperDashboard() {
 
   const fetchOrders = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/shopkeeper-orders', {
+      const response = await axios.get(api.shopkeeperOrders.getAll(), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -84,7 +85,7 @@ export default function ShopkeeperDashboard() {
         quantity: item.quantity
       }));
 
-      await axios.post('http://localhost:5000/api/shopkeeper-orders', {
+      await axios.post(api.shopkeeperOrders.create(), {
         orderItems,
         ...orderForm
       }, {

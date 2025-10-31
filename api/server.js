@@ -32,7 +32,8 @@ const corsOptions = {
       "https://ideal-nimko.netlify.app", // Your Netlify URL
       "https://68f2494dc675e44367bd2ced--ideal-nimko.netlify.app", // Your Netlify preview URL
       "http://localhost:3000",
-      "http://localhost:5173"
+      "http://localhost:5173",
+      "https://ideal-nimko-web.vercel.app" // <-- Added Vercel custom domain
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
