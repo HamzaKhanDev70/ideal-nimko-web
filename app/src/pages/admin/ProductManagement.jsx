@@ -78,10 +78,19 @@ export default function ProductManagement() {
     }
     
     try {
+      const token = localStorage.getItem('adminToken');
       if (editingProduct) {
-        await axios.put(`http://localhost:5000/api/products/${editingProduct._id}`, submitData);
+        await axios.put(
+          api.products.update(editingProduct._id),
+          submitData,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
       } else {
-        await axios.post('http://localhost:5000/api/products', submitData);
+        await axios.post(
+          api.products.create(),
+          submitData,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
       }
       setShowModal(false);
       setEditingProduct(null);
@@ -111,7 +120,11 @@ export default function ProductManagement() {
   const handleDelete = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/products/${productId}`);
+        const token = localStorage.getItem('adminToken');
+        await axios.delete(
+          api.products.delete(productId),
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
         fetchProducts();
       } catch (error) {
         console.error('Error deleting product:', error);
@@ -162,12 +175,16 @@ export default function ProductManagement() {
         formData.append('images', file);
       });
 
-      const response = await axios.post('http://localhost:5000/api/products/upload-images', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+      const response = await axios.post(
+        api.products.uploadImages(),
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          }
         }
-      });
+      );
 
       setFormData(prev => ({
         ...prev,

@@ -66,7 +66,7 @@ export const AdminProvider = ({ children }) => {
   const verifyToken = async () => {
     try {
       // Try new user system first
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/profile`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/users/profile`);
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: {

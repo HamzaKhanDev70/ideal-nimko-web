@@ -38,7 +38,7 @@ const getApiPath = (path) => {
 export const api = {
   // Products
   products: {
-    getAll: () => `${API_BASE_URL}${getApiPath('/api/products')}`,
+    getAll: () => `${API_BASE_URL}${getApiPath('/products')}`,
     getById: (id) => `${API_BASE_URL}${getApiPath(`/api/products/${id}`)}`,
     create: () => `${API_BASE_URL}${getApiPath('/api/products')}`,
     update: (id) => `${API_BASE_URL}${getApiPath(`/api/products/${id}`)}`,
