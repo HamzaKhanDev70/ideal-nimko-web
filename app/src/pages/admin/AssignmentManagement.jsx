@@ -40,7 +40,7 @@ export default function AssignmentManagement() {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
-
+console.log(assignmentsResponse.data,'assignmentsResponse');
       setAssignments(assignmentsResponse.data.assignments || []);
       setSalesmen(salesmenResponse.data.salesmen || []);
       setShopkeepers(shopkeepersResponse.data.shopkeepers || []);

@@ -148,8 +148,8 @@ export default function RecoveryManagement() {
 
     setNewItem({
       product: '',
-      quantity: 1,
-      unitPrice: 0
+      quantity: "",
+      unitPrice: ""
     });
   };
 
@@ -391,7 +391,7 @@ export default function RecoveryManagement() {
                       <input
                         type="number"
                         value={newItem.quantity}
-                        onChange={(e) => setNewItem({...newItem, quantity: parseInt(e.target.value) || 1})}
+                        onChange={(e) => setNewItem({...newItem, quantity: parseInt(e.target.value) || ""})}
                         min="0"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -401,7 +401,7 @@ export default function RecoveryManagement() {
                       <input
                         type="number"
                         value={newItem.unitPrice}
-                        onChange={(e) => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || ""})}
                         min="0"
                         step="1"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
