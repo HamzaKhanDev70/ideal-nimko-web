@@ -55,8 +55,8 @@ const seedUsers = async () => {
     // Create sample salesmen
     const salesmen = [
       {
-        name: 'Rajesh Kumar',
-        email: 'rajesh@idealnimko.com',
+        name: 'Hassan Rana',
+        email: 'hassan@idealnimko.com',
         password: 'salesman123',
         role: 'salesman',
         phone: '+91-9876543212',
@@ -66,8 +66,8 @@ const seedUsers = async () => {
         assignedBy: admin._id
       },
       {
-        name: 'Priya Sharma',
-        email: 'priya@idealnimko.com',
+        name: 'Ali Raza',
+        email: 'ali@idealnimko.com',
         password: 'salesman123',
         role: 'salesman',
         phone: '+91-9876543213',
@@ -87,24 +87,24 @@ const seedUsers = async () => {
     // Create sample shopkeepers
     const shopkeepers = [
       {
-        name: 'Amit Patel',
-        email: 'amit@shopkeeper.com',
+        name: 'Maher Akbar',
+        email: 'akbar@shopkeeper.com',
         password: 'shopkeeper123',
         role: 'shopkeeper',
         phone: '+91-9876543214',
         address: 'Andheri, Mumbai',
         territory: 'Mumbai West',
-        assignedSalesman: (await User.findOne({ email: 'rajesh@idealnimko.com' }))._id
+        assignedSalesman: (await User.findOne({ email: 'hassan@idealnimko.com' }))._id
       },
       {
-        name: 'Sunita Singh',
-        email: 'sunita@shopkeeper.com',
+        name: 'layyah',
+        email: 'layyah@shopkeeper.com',
         password: 'shopkeeper123',
         role: 'shopkeeper',
         phone: '+91-9876543215',
         address: 'Karol Bagh, Delhi',
         territory: 'Delhi North',
-        assignedSalesman: (await User.findOne({ email: 'priya@idealnimko.com' }))._id
+        assignedSalesman: (await User.findOne({ email: 'hassan@idealnimko.com' }))._id
       }
     ];
 

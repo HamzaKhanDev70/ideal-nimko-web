@@ -78,6 +78,7 @@ export default function ProductManagement() {
     }
     
     try {
+      const token = localStorage.getItem('adminToken');
       if (editingProduct) {
         await axios.put(api.products.update(editingProduct._id), submitData);
       } else {
@@ -167,7 +168,7 @@ export default function ProductManagement() {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
-      });
+      );
 
       setFormData(prev => ({
         ...prev,
