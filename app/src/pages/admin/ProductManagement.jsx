@@ -168,7 +168,7 @@ export default function ProductManagement() {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
-      );
+      });
 
       setFormData(prev => ({
         ...prev,
