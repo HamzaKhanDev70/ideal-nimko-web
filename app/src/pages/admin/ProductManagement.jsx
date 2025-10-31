@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { api } from '../../utils/api';
+import { API_BASE_URL, api } from '../../utils/api';
+
+// Helper to get base URL for static assets (without /api)
+const getImageBaseUrl = () => {
+  const base = API_BASE_URL.replace(/\/api\/?$/, '');
+  return base;
+};
 
 export default function ProductManagement() {
   const [products, setProducts] = useState([]);
@@ -74,15 +80,23 @@ export default function ProductManagement() {
     
     // If no imageURL but we have uploaded images, use the first uploaded image as main image
     if (!submitData.imageURL && submitData.additionalImages.length > 0) {
-      submitData.imageURL = `${process.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api'}${submitData.additionalImages[0]}`;
+      submitData.imageURL = `${getImageBaseUrl()}${submitData.additionalImages[0]}`;
     }
     
     try {
       const token = localStorage.getItem('adminToken');
       if (editingProduct) {
-        await axios.put(api.products.update(editingProduct._id), submitData);
+        await axios.put(
+          api.products.update(editingProduct._id),
+          submitData,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
       } else {
-        await axios.post(api.products.create(), submitData);
+        await axios.post(
+          api.products.create(),
+          submitData,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
       }
       setShowModal(false);
       setEditingProduct(null);
@@ -112,7 +126,11 @@ export default function ProductManagement() {
   const handleDelete = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await axios.delete(`${process.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api'}/api/products/${productId}`);
+        const token = localStorage.getItem('adminToken');
+        await axios.delete(
+          api.products.delete(productId),
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
         fetchProducts();
       } catch (error) {
         console.error('Error deleting product:', error);
@@ -163,12 +181,16 @@ export default function ProductManagement() {
         formData.append('images', file);
       });
 
-      const response = await axios.post(`${process.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api'}/api/products/upload-images`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+      const response = await axios.post(
+        api.products.uploadImages(),
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          }
         }
-      });
+      );
 
       setFormData(prev => ({
         ...prev,
@@ -275,7 +297,7 @@ export default function ProductManagement() {
           {filteredProducts.map((product) => (
             <div key={product._id} className="bg-white rounded-lg shadow overflow-hidden">
               <img
-                src={product.imageURL}
+                src={product.imageURL && product.imageURL.startsWith('http') ? product.imageURL : (product.imageURL ? `${getImageBaseUrl()}${product.imageURL}` : '')}
                 alt={product.name}
                 className="w-full h-48 object-cover"
               />
@@ -321,7 +343,7 @@ export default function ProductManagement() {
                       {product.additionalImages.slice(0, 3).map((imageUrl, index) => (
                         <img
                           key={index}
-                          src={`${process.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api'}${imageUrl}`}
+                          src={`${getImageBaseUrl()}${imageUrl}`}
                           alt={`${product.name} ${index + 1}`}
                           className="w-8 h-8 object-cover rounded"
                         />
@@ -571,7 +593,7 @@ export default function ProductManagement() {
                       {formData.additionalImages.map((imageUrl, index) => (
                         <div key={index} className="relative">
                           <img
-                            src={`${process.env.VITE_API_URL || 'https://ideal-nimko-web-production-e088.up.railway.app/api'}${imageUrl}`}
+                            src={`${getImageBaseUrl()}${imageUrl}`}
                             alt={`Product ${index + 1}`}
                             className="w-full h-20 object-cover rounded"
                           />
